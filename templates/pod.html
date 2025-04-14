@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Blaze Pod {{ pod_id }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="/static/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/serviceWorker.js');
+        }
+    </script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            color: white;
+            font-size: 2rem;
+            text-align: center;
+        }
+        .active {
+            background-color: red !important;
+        }
+        #antiSleep {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            left: -10px;
+            top: -10px;
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+<div id="info" style="margin-top: 2rem;"></div>
+<div id="antiSleep"></div>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+    const podId = "{{ pod_id }}";
+    const socket = io();
+
+    socket.on("connect", () => {
+        socket.emit("register", { pod_id: podId });
+    });
+
+    socket.on("blink", data => {
+        document.body.classList.remove("active");
+        if (data.target === podId) {
+            document.body.classList.add("active");
+        }
+    });
+
+    socket.on("countdown", seconds => {
+        const info = document.getElementById("info");
+        info.innerText = `Blaze Pod ${podId} – Spiel startet gleich`;
+        let counter = seconds;
+        const countdownInterval = setInterval(() => {
+            document.body.innerText = counter > 0 ? counter : "";
+            counter--;
+            if (counter < 0) {
+                clearInterval(countdownInterval);
+                document.body.innerText = "";
+                info.innerText = "";
+            }
+        }, 1000);
+    });
+
+    // Wake Lock API
+    let wakeLock = null;
+    async function requestWakeLock() {
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+            console.log('Wake lock aktiviert');
+        } catch (err) {
+            console.error(`${err.name}, ${err.message}`);
+        }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (wakeLock !== null && document.visibilityState === 'visible') {
+            requestWakeLock();
+        }
+    });
+
+    requestWakeLock();
+
+    // Anti-Sleep-Fallback für iPhones
+    const antiSleep = document.getElementById("antiSleep");
+    setInterval(() => {
+        antiSleep.style.left = (antiSleep.style.left === "-10px") ? "-11px" : "-10px";
+    }, 15000); // alle 15 Sekunden kleine Bewegung
+</script>
+</body>
+</html>
