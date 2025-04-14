@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Blaze Pod {{ pod_id }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="/static/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/serviceWorker.js');
+        }
+    </script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            color: white;
+            font-size: 2rem;
+            text-align: center;
+        }
+        .active-red {
+            background-color: red !important;
+        }
+        .active-blue {
+            background-color: blue !important;
+        }
+        .active-green {
+            background-color: green !important;
+        }
+        .active-yellow {
+            background-color: yellow !important;
+        }
+        #sleeppreventer {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+        #overlay {
+            position: absolute;
+            top: 40%;
+            width: 100%;
+            text-align: center;
+            font-size: 5rem;
+            font-weight: bold;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<video id="sleeppreventer" autoplay muted loop playsinline>
+    <source src="https://upload.wikimedia.org/wikipedia/commons/transcoded/b/b3/1x1_red_pixel.webm/1x1_red_pixel.webm.360p.webm" type="video/webm">
+</video>
+
+<div id="info" style="margin-top: 2rem;"></div>
+<div id="overlay"></div>
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+    const podId = "{{ pod_id }}";
+    const socket = io();
+    let countdownInterval = null;
+
+    function clearBlinkClasses() {
+        document.body.classList.remove("active-red", "active-blue", "active-green", "active-yellow");
+    }
+
+    socket.on("connect", () => {
+        socket.emit("register", { pod_id: podId });
+    });
+
+    socket.on("blink", data => {
+        clearBlinkClasses();
+        const overlay = document.getElementById("overlay");
+        overlay.innerText = "";
+        if (data.target === podId && data.color) {
+            document.body.classList.add("active-" + data.color);
+            overlay.innerText = data.text || "";
+        }
+    });
+
+    socket.on("countdown", seconds => {
+        clearInterval(countdownInterval);
+        const info = document.getElementById("info");
+        info.innerText = `Blaze Pod ${podId} – Spiel startet gleich`;
+        let counter = seconds;
+        countdownInterval = setInterval(() => {
+            document.body.innerText = counter > 0 ? counter : "";
+            counter--;
+            if (counter < 0) {
+                clearInterval(countdownInterval);
+                document.body.innerText = "";
+                info.innerText = "";
+            }
+        }, 1000);
+    });
+
+    socket.on("game_stopped", () => {
+        clearInterval(countdownInterval);
+        clearBlinkClasses();
+        document.body.innerText = "";
+        document.getElementById("overlay").innerText = "";
+        document.getElementById("info").innerText = "Spiel abgebrochen";
+    });
+
+    setInterval(() => {
+        window.scrollBy(0, 1);
+        window.scrollBy(0, -1);
+    }, 20000);
+</script>
+</body>
+</html>
