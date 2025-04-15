@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>BlazePod</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: black;
+        }
+        #screen {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+<div id="screen"></div>
+<script>
+    const podId = parseInt(window.location.pathname.split("/").pop());
+    let current = null;
+
+    function update() {
+        fetch('/status')
+            .then(res => res.json())
+            .then(data => {
+                const screen = document.getElementById('screen');
+                if (!data.active) {
+                    screen.style.backgroundColor = "black";
+                    return;
+                }
+
+                if (data.mode === "Memory") {
+                    const seq = data.sequence;
+                    if (seq.length > 0) {
+                        const currentPod = seq[Math.floor((60 - data.remaining_time) / (3 + 1)) % seq.length];
+                        screen.style.backgroundColor = currentPod === podId ? "orange" : "black";
+                    }
+                    return;
+                }
+
+                if (data.mode === "Touch to Switch" || data.mode === "Classic") {
+                    const activePod = data.active_pod;
+                    if (activePod === podId) {
+                        screen.style.backgroundColor = data.active_color || "red";
+                    } else {
+                        screen.style.backgroundColor = "black";
+                    }
+                }
+            });
+    }
+
+    setInterval(update, 500);
+
+    window.onclick = () => {
+        fetch('/touch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pod_id: podId })
+        });
+    };
+
+    fetch('/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pod_id: podId })
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>BlazePod Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #111;
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            margin-bottom: 10px;
+        }
+        .pod-status {
+            margin: 10px 0;
+        }
+        .pod-status button {
+            margin: 2px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: none;
+            background-color: #333;
+            color: white;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .controls label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .controls input, .controls select {
+            padding: 5px;
+            font-size: 16px;
+        }
+        .buttons {
+            margin-top: 20px;
+        }
+        .buttons button {
+            font-size: 16px;
+            margin: 5px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+        }
+        .buttons .start { background-color: #007bff; color: white; }
+        .buttons .stop { background-color: #dc3545; color: white; }
+        .buttons .restart { background-color: #28a745; color: white; }
+        .qrcodes {
+            margin-top: 40px;
+        }
+        canvas {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>BlazePod Dashboard</h1>
+
+    <div class="pod-status">
+        <button>Pod 1</button>
+        <button>Pod 2</button>
+        <button>Pod 3</button>
+        <button>Pod 4</button>
+    </div>
+
+    <div class="controls">
+        <label>Spielzeit (min): <input type="number" id="duration" value="1" min="1"></label>
+        <label>Blink-Intervall (sek): <input type="number" id="blinkInterval" value="1" min="1"></label>
+        <label>Pausenzeit (sek): <input type="number" id="pauseTime" value="1" min="0"></label>
+        <label>Modus: <select id="mode"><option value="Classic">Classic</option><option value="Memory">Memory</option></select></label>
+        <label>Benötigte Pods: <select id="requiredPods"><option value="1">1 Pod</option><option value="2">2 Pods</option><option value="3">3 Pods</option><option value="4" selected>4 Pods</option></select></label>
+        <label><input type="checkbox" id="multiColor"> Mehrfarbenmodus aktivieren</label>
+    </div>
+
+    <div class="buttons">
+        <button class="start">Start</button>
+        <button class="stop">Stopp</button>
+        <button class="restart">Neustart</button>
+    </div>
+
+    <p id="countdownDisplay">Verbleibende Zeit: --</p>
+    <p id="status"></p>
+
+    <div class="qrcodes">
+        <h2>QR-Codes für Pods</h2>
+        <canvas id="qr1"></canvas>
+        <canvas id="qr2"></canvas>
+        <canvas id="qr3"></canvas>
+        <canvas id="qr4"></canvas>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script>
+        function generateQRCode(id, text) {
+            new QRious({
+                element: document.getElementById(id),
+                value: text,
+                size: 150,
+                background: 'white',
+                foreground: 'black',
+                level: 'H'
+            });
+        }
+        generateQRCode("qr1", window.location.origin + "/pod/1");
+        generateQRCode("qr2", window.location.origin + "/pod/2");
+        generateQRCode("qr3", window.location.origin + "/pod/3");
+        generateQRCode("qr4", window.location.origin + "/pod/4");
+    </script>
+</body>
+</html>
