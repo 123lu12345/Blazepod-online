@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Blaze Pod {{ pod_id }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+        html, body {
+            margin: 0; padding: 0; background-color: black;
+            width: 100vw; height: 100vh; overflow: hidden; text-align: center;
+            font-size: 2rem; color: white;
+        }
+        .active-red { background-color: red !important; }
+        .active-blue { background-color: blue !important; }
+        .active-green { background-color: green !important; }
+        .active-yellow { background-color: yellow !important; }
+    </style>
+</head>
+<body>
+<div id="info" style="margin-top: 2rem;"></div>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+    const podId = "{{ pod_id }}";
+    const socket = io();
+    let wasFinished = false;
+    let isActive = false;
+
+    function clearBlink() {
+        document.body.classList.remove("active-red", "active-blue", "active-green", "active-yellow");
+        isActive = false;
+    }
+
+    socket.on("connect", () => {
+        socket.emit("register", { pod_id: podId });
+    });
+
+    socket.on("blink", data => {
+        clearBlink();
+        if (data.target === podId && data.color) {
+            document.body.classList.add("active-" + data.color);
+            isActive = true;
+        }
+    });
+
+    socket.on("countdown_tick", data => {
+        const val = data.value;
+        const info = document.getElementById("info");
+        if (val > 0) {
+            info.innerText = `Blaze Pod ${podId} – Start in ${val}`;
+        } else {
+            info.innerText = "";
+        }
+    });
+
+    socket.on("game_finished", () => {
+        clearBlink();
+        wasFinished = true;
+        document.getElementById("info").innerText = "✅ Spiel beendet";
+    });
+
+    socket.on("game_stopped", () => {
+        clearBlink();
+        if (!wasFinished) {
+            document.getElementById("info").innerText = "❌ Spiel abgebrochen";
+        }
+        wasFinished = false;
+    });
+
+    document.body.addEventListener("click", () => {
+        if (isActive) {
+            socket.emit("pod_clicked", { pod_id: podId });
+            clearBlink();
+        }
+    });
+
+    setInterval(() => {
+        window.scrollBy(0, 1);
+        window.scrollBy(0, -1);
+    }, 20000);
+</script>
+</body>
+</html>
