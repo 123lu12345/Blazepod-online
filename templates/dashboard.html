@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>BlazePod Dashboard</title>
+    <style>
+        body {
+            background-color: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            font-size: 22px;
+        }
+        h1 {
+            font-size: 42px;
+        }
+        .pod-status button {
+            width: 120px;
+            height: 60px;
+            margin: 10px;
+            font-size: 18px;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            background-color: #333;
+        }
+        input, select {
+            font-size: 20px;
+            padding: 5px;
+            margin: 0 10px;
+        }
+        .controls, .qr-section {
+            margin: 30px 0;
+        }
+        .buttons button {
+            font-size: 20px;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 8px;
+            border: none;
+        }
+        .start { background-color: #007bff; color: white; }
+        .stop { background-color: #dc3545; color: white; }
+        .restart { background-color: #28a745; color: white; }
+        .qr-codes img {
+            width: 160px;
+            height: 160px;
+            margin: 10px;
+        }
+        #gameEndedMessage {
+            font-size: 26px;
+            color: lightgreen;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>BlazePod Dashboard</h1>
+    <div class="pod-status">
+        <button id="status-pod-1">Pod 1</button>
+        <button id="status-pod-2">Pod 2</button>
+        <button id="status-pod-3">Pod 3</button>
+        <button id="status-pod-4">Pod 4</button>
+    </div>
+
+    <div class="controls">
+        Spielzeit (min):
+        <input type="number" id="duration" value="1" min="1">
+        Blink-Intervall (sek):
+        <input type="number" id="interval" value="1" min="1">
+        Pausenzeit (sek):
+        <input type="number" id="pause" value="1" min="0"><br><br>
+
+        Modus:
+        <select id="mode">
+            <option value="classic">Classic</option>
+            <option value="touch">Touch to Switch</option>
+            <option value="memory">Memory</option>
+        </select>
+
+        <span id="memoryLengthWrapper" style="display: none;">
+            Memory-Länge:
+            <input type="number" id="memoryLength" value="5" min="1">
+        </span>
+
+        <br><br>
+        Benötigte Pods:
+        <select id="requiredPods">
+            <option value="1">1 Pod</option>
+            <option value="2">2 Pods</option>
+            <option value="3">3 Pods</option>
+            <option value="4" selected>4 Pods</option>
+        </select>
+
+        <br><br>
+        <input type="checkbox" id="multicolor">
+        <label for="multicolor">Mehrfarbenmodus aktivieren</label>
+    </div>
+
+    <div class="buttons">
+        <button class="start" id="start">Start</button>
+        <button class="stop" id="stop">Stopp</button>
+        <button class="restart" id="restart">Neustart</button>
+    </div>
+
+    <div id="remainingTime">Verbleibende Zeit: --</div>
+    <div id="gameEndedMessage"></div>
+
+    <div class="qr-section">
+        <h2>QR-Codes für Pods</h2>
+        <div class="qr-codes" id="qr-codes">
+            <img id="qr1" src="/static/qr1.png" alt="QR-Code 1">
+            <img id="qr2" src="/static/qr2.png" alt="QR-Code 2">
+            <img id="qr3" src="/static/qr3.png" alt="QR-Code 3">
+            <img id="qr4" src="/static/qr4.png" alt="QR-Code 4">
+        </div>
+    </div>
+
+    <script>
+        const modeSelect = document.getElementById("mode");
+        const memoryLengthWrapper = document.getElementById("memoryLengthWrapper");
+        modeSelect.addEventListener("change", () => {
+            memoryLengthWrapper.style.display = modeSelect.value === "memory" ? "inline" : "none";
+        });
+    </script>
+</body>
+</html>
