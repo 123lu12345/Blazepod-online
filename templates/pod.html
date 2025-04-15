@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Pod</title>
+<style>body{margin:0;background:#000}#screen{width:100vw;height:100vh;}</style>
+</head>
+<body>
+<div id="screen"></div>
+<script>
+let podId = window.location.pathname.split("/").pop();
+let active = false;
+
+function poll() {
+  fetch('/status')
+    .then(res => res.json())
+    .then(data => {
+      let current = data.active_pod;
+      let color = data.active_color || 'black';
+      active = ("" + current) === podId;
+      document.getElementById("screen").style.backgroundColor = active ? color : "black";
+    });
+}
+setInterval(poll, 500);
+
+document.body.onclick = () => {
+  if (active) {
+    fetch("/touch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pod_id: parseInt(podId) })
+    });
+  }
+};
+
+fetch("/connect", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ pod_id: parseInt(podId) })
+});
+</script>
+</body>
+</html>
