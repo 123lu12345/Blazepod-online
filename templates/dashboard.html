@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>BlazePod Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
+    <style>
+        body { background: #111; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
+        h1 { font-size: 36px; }
+        canvas { margin: 10px; background: white; border-radius: 10px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>BlazePod Dashboard</h1>
+    <h2>QR-Codes für Pods</h2>
+    <div id="qrs">
+        <canvas id="qr1"></canvas>
+        <canvas id="qr2"></canvas>
+        <canvas id="qr3"></canvas>
+        <canvas id="qr4"></canvas>
+    </div>
+
+    <script>
+        const base = window.location.origin;
+        const pods = 4;
+        for (let i = 1; i <= pods; i++) {
+            const qr = new QRious({
+                element: document.getElementById("qr" + i),
+                value: `${base}/pod/${i}`,
+                size: 180
+            });
+        }
+    </script>
+</body>
+</html>
