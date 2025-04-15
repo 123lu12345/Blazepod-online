@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>BlazePod Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background-color: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .pod-status {
+            display: flex;
+            justify-content: center;
+            margin: 20px;
+        }
+        .pod-box {
+            padding: 10px 20px;
+            margin: 0 10px;
+            background-color: #444;
+            border-radius: 10px;
+        }
+        select, input[type="number"] {
+            margin: 5px;
+            padding: 5px;
+            border-radius: 5px;
+            border: none;
+            width: 60px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 10px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .start { background-color: #007BFF; color: white; }
+        .stop { background-color: #dc3545; color: white; }
+        .restart { background-color: #28a745; color: white; }
+        .hidden { display: none; }
+        #qr-codes { display: flex; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+        #qr-codes canvas { margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>BlazePod Dashboard</h1>
+    <div class="pod-status" id="pod-status">
+        <div class="pod-box" id="status1">Pod 1</div>
+        <div class="pod-box" id="status2">Pod 2</div>
+        <div class="pod-box" id="status3">Pod 3</div>
+        <div class="pod-box" id="status4">Pod 4</div>
+    </div>
+
+    <div>
+        <label>Spielzeit (min): <input type="number" id="spielzeit" value="1" min="1"></label>
+        <label>Blink-Intervall (sek): <input type="number" id="blinkintervall" value="1" min="1"></label>
+        <label>Pausenzeit (sek): <input type="number" id="pausezeit" value="1" min="0"></label>
+    </div>
+    <div>
+        <label>Modus:
+            <select id="modus">
+                <option value="Classic">Classic</option>
+                <option value="TouchToSwitch">Touch to Switch</option>
+                <option value="Memory">Memory</option>
+            </select>
+        </label>
+        <label id="memory-length-label" class="hidden">Memory-Länge:
+            <input type="number" id="memory-length" value="4" min="1" max="20">
+        </label>
+    </div>
+    <div>
+        <label>Benötigte Pods:
+            <select id="pod-count">
+                <option value="1">1 Pod</option>
+                <option value="2">2 Pods</option>
+                <option value="3">3 Pods</option>
+                <option value="4" selected>4 Pods</option>
+            </select>
+        </label>
+    </div>
+    <div>
+        <label><input type="checkbox" id="multicolor"> Mehrfarbenmodus aktivieren</label>
+    </div>
+
+    <div>
+        <button class="start" onclick="startGame()">Start</button>
+        <button class="stop" onclick="stopGame()">Stopp</button>
+        <button class="restart" onclick="restartGame()">Neustart</button>
+    </div>
+
+    <div id="timer">Verbleibende Zeit: --</div>
+    <div id="game-end" class="hidden">
+        <p>✅ Spiel beendet</p>
+    </div>
+
+    <h3>QR-Codes für Pods</h3>
+    <div id="qr-codes"></div>
+
+    <script>
+        const modusSelect = document.getElementById("modus");
+        const memoryLabel = document.getElementById("memory-length-label");
+
+        modusSelect.addEventListener("change", () => {
+            if (modusSelect.value === "Memory") {
+                memoryLabel.classList.remove("hidden");
+            } else {
+                memoryLabel.classList.add("hidden");
+            }
+        });
+
+        function startGame() {
+            // Dummy logic placeholder
+            document.getElementById("game-end").classList.add("hidden");
+        }
+
+        function stopGame() {
+            // Dummy logic placeholder
+        }
+
+        function restartGame() {
+            // Dummy logic placeholder
+            document.getElementById("game-end").classList.add("hidden");
+        }
+    </script>
+</body>
+</html>
