@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>BlazePod Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding: 2rem; }
+        .pod { padding: 1rem; margin: 0.5rem; border-radius: 1rem; display: none; background: #444; min-width: 100px; }
+        .connected { background: green !important; }
+        #startBtn, #stopBtn, #restartBtn {
+            margin-top: 1rem; padding: 1rem 2rem; font-size: 1.2rem;
+            border: none; border-radius: 1rem; color: white; cursor: pointer;
+        }
+        #startBtn { background: dodgerblue; display: none; }
+        #stopBtn { background: crimson; display: none; }
+        #restartBtn { background: green; display: none; }
+        .settings label, .settings input, .settings select { margin: 0.5rem; font-size: 1.1rem; }
+        .settings input { width: 60px; text-align: center; }
+        .qr-code { margin: 1rem; display: none; }
+        .qr-code canvas { border: 4px solid white; border-radius: 1rem; }
+        #countdown, #timer, #statusMessage { font-size: 1.5rem; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+<h1>BlazePod Dashboard</h1>
+
+<div id="pods">
+    <div class="pod" id="pod1">Pod 1</div>
+    <div class="pod" id="pod2">Pod 2</div>
+    <div class="pod" id="pod3">Pod 3</div>
+    <div class="pod" id="pod4">Pod 4</div>
+</div>
+
+<div class="settings">
+    <label>Spielzeit (min):</label>
+    <input type="number" id="gameDuration" value="5" min="1" max="15">
+    <label>Blink-Intervall (sek):</label>
+    <input type="number" id="blinkInterval" value="3" min="1" max="10">
+    <label>Pause zwischen Blinks (sek):</label>
+    <input type="number" id="blackPause" value="1" min="0" max="10" step="0.1"><br>
+    <label>Benötigte Pods:</label>
+    <select id="requiredPods" onchange="updatePodVisibility()">
+        <option value="1">1 Pod</option>
+        <option value="2">2 Pods</option>
+        <option value="3">3 Pods</option>
+        <option value="4" selected>4 Pods</option>
+    </select><br>
+    <label>
+        <input type="checkbox" id="randomTimingToggle" onchange="toggleIntervalFields()"> Zufallsmodus aktivieren
+    </label><br>
+    
+<label>Spielmodus:</label>
+<select id="gameMode" onchange="toggleIntervalFields()">
+  <option value="classic">Classic</option>
+  <option value="multicolor">Classic - Mehrfarbenmodus</option>
+  <option value="shapes">Formen</option>
+  <option value="shapes-multicolor">Formen - Mehrfarbenmodus</option>
+  <option value="numbers">Zahlen</option>
+  <option value="numbers-multicolor">Zahlen - Mehrfarbenmodus</option>
+  <option value="touch-switch">Touch to Switch</option>
+  <option value="touch-switch-multicolor">Touch to Switch - Mehrfarbenmodus</option>
+</select>
+
+</div>
+
+<button id="startBtn">Start</button>
+<button id="stopBtn">Stopp</button>
+<button id="restartBtn" onclick="location.reload()">Neustart</button>
+
+<div id="countdown"></div>
+<div id="timer"></div>
+<div id="statusMessage"></div>
+
+<h2>QR-Codes für Pods</h2>
+<div class="qr-code" id="qr1"></div>
+<div class="qr-code" id="qr2"></div>
+<div class="qr-code" id="qr3"></div>
+<div class="qr-code" id="qr4"></div>
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script>
+    const socket = io();
+    const podElements = {
+        "1": document.getElementById("pod1"),
+        "2": document.getElementById("pod2"),
+        "3": document.getElementById("pod3"),
+        "4": document.getElementById("pod4")
+    };
+
+    let gameDurationSeconds = 0;
+    let timerInterval = null;
+    let startTimerAfterCountdown = false;
+
+    function updatePodVisibility() {
+        const required = parseInt(document.getElementById("requiredPods").value);
+        for (let i = 1; i <= 4; i++) {
+            document.getElementById("pod" + i).style.display = (i <= required) ? "inline-block" : "none";
+            document.getElementById("qr" + i).style.display = (i <= required) ? "inline-block" : "none";
+        }
+    }
+
+    function updateStartButtons(connected) {
+        const required = parseInt(document.getElementById("requiredPods").value);
+        const activePods = connected.length;
+        const showButtons = activePods >= required;
+        document.getElementById("startBtn").style.display = showButtons ? "inline-block" : "none";
+        document.getElementById("stopBtn").style.display = showButtons ? "inline-block" : "none";
+    }
+
+    function toggleIntervalFields() {
+        const isRandom = document.getElementById("randomTimingToggle").checked;
+        document.getElementById("blinkInterval").style.display = isRandom ? "none" : "inline-block";
+        document.getElementById("blackPause").style.display = isRandom ? "none" : "inline-block";
+    }
+
+    function updateTimerDisplay() {
+        const minutes = Math.floor(gameDurationSeconds / 60);
+        const seconds = gameDurationSeconds % 60;
+        document.getElementById("timer").innerText = `Verbleibende Spielzeit: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    socket.on("update", connected => {
+        Object.keys(podElements).forEach(id => {
+            podElements[id].classList.remove("connected");
+            if (connected.includes(id)) {
+                podElements[id].classList.add("connected");
+            }
+        });
+        updateStartButtons(connected);
+    });
+
+    document.getElementById("startBtn").onclick = () => {
+        const duration = parseInt(document.getElementById("gameDuration").value);
+        const interval = parseFloat(document.getElementById("blinkInterval").value);
+        const pause = parseFloat(document.getElementById("blackPause").value);
+        const mode = document.getElementById("gameMode").value;
+        const randomTiming = document.getElementById("randomTimingToggle").checked;
+        socket.emit("start_game", { duration, interval, pause, multicolor: false, randomTiming, mode });
+        gameDurationSeconds = duration * 60;
+        updateTimerDisplay();
+        startTimerAfterCountdown = true;
+    };
+
+    socket.on("countdown_tick", data => {
+        document.getElementById("countdown").innerText = data.value > 0 ? `Start in ${data.value}...` : "";
+        if (data.value === 0 && startTimerAfterCountdown) {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (gameDurationSeconds > 0) {
+                    gameDurationSeconds--;
+                    updateTimerDisplay();
+                }
+            }, 1000);
+            startTimerAfterCountdown = false;
+        }
+    });
+
+    document.getElementById("stopBtn").onclick = () => {
+        socket.emit("stop_game");
+        clearInterval(timerInterval);
+        document.getElementById("timer").innerText = "";
+    };
+
+    socket.on("game_finished", () => {
+        document.getElementById("statusMessage").innerText = "✅ Spiel beendet";
+        clearInterval(timerInterval);
+    });
+
+    socket.on("game_stopped", () => {
+        document.getElementById("statusMessage").innerText = "❌ Spiel abgebrochen";
+        clearInterval(timerInterval);
+    });
+
+    const baseURL = window.location.origin;
+    for (let i = 1; i <= 4; i++) {
+        const qr = new QRious({
+            element: document.getElementById("qr" + i).appendChild(document.createElement("canvas")),
+            value: `${baseURL}/pod/${i}`,
+            size: 150
+        });
+    }
+
+    updatePodVisibility();
+</script>
+</body>
+</html>
