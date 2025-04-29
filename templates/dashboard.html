@@ -1,0 +1,35 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>BlazePod Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="background:#121212;color:white;text-align:center;">
+<h1>BlazePod Dashboard</h1>
+<select id="gameMode">
+
+<option value="classic">Classic</option>
+<option value="multicolor">Classic - Mehrfarbenmodus</option>
+<option value="shapes">Formen</option>
+<option value="shapes-multicolor">Formen - Mehrfarbenmodus</option>
+<option value="numbers">Zahlen</option>
+<option value="numbers-multicolor">Zahlen - Mehrfarbenmodus</option>
+<option value="touch-switch">Touch to Switch</option>
+<option value="touch-switch-multicolor">Touch to Switch - Mehrfarbenmodus</option>
+
+</select>
+<button id="startBtn">Start</button>
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+const socket = io();
+
+document.getElementById("startBtn").onclick = () => {
+    const mode = document.getElementById("gameMode").value;
+    socket.emit("start_game", { mode });
+};
+</script>
+</body>
+</html>
