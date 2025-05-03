@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8"/>
+  <title>
+   Blaze Pod
+  </title>
+  <meta content="width=device-width, initial-scale=1.0, user-scalable=no" name="viewport"/>
+  <style>
+   html, body {
+      margin: 0; padding: 0;
+      width: 100vw; height: 100vh;
+      background: black; overflow: hidden;
+      font-size: 2rem; color: white;
+      text-align: center;
+    }
+    #formDisplay {
+      display: flex; justify-content: center; align-items: center;
+      height: 80vh;
+      font-size: 10rem;
+      text-shadow: 2px 2px 5px black;
+    }
+  </style>
+  <meta content="yes" name="apple-mobile-web-app-capable"/>
+  <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+ </head>
+ <body ontouchstart="notifyTouch()">
+  <div id="info" style="margin-top: 1rem;">
+  </div>
+  <div id="formDisplay">
+  </div>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js">
+  </script>
+  <script>
+   const podId = new URLSearchParams(window.location.search).get("pod_id") || "{{ pod_id }}";
+const socket = io();
+const colors = ["red", "blue", "green", "yellow"];
+let wasFinished = false;
+
+function clearBlink() {
+  document.body.style.backgroundColor = "black";
+  document.getElementById("formDisplay").innerHTML = "";
+}
+
+function notifyTouch() {
+  socket.emit("pod_touched", { pod_id: podId });
+}
+
+socket.on("connect", () => socket.emit("register", { pod_id: podId }));
+
+socket.on("blink", data => {
+  clearBlink();
+  if (data.target === podId) {
+    const formDiv = document.getElementById("formDisplay");
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    if (data.form) {
+    document.body.style.backgroundColor = data.color || "#333";
+      document.body.style.backgroundColor = data.mode === "shapes-multicolor" ? randomColor : "#333";
+      const shapes = {
+        circle: '<svg width="220" height="220"><circle cx="110" cy="110" r="90" fill="white" stroke="black" stroke-width="6"/></svg>',
+        square: '<svg width="220" height="220"><rect width="160" height="160" x="30" y="30" fill="white" stroke="black" stroke-width="6"/></svg>',
+        triangle: '<svg width="220" height="220"><polygon points="110,30 190,190 30,190" fill="white" stroke="black" stroke-width="6"/></svg>',
+        star: '<svg width="220" height="220" viewBox="0 0 24 24"><polygon points="12,2 15,8 22,9 17,14 18,21 12,17 6,21 7,14 2,9 9,8" fill="white" stroke="black" stroke-width="2"/></svg>'
+      };
+      formDiv.innerHTML = shapes[data.form] || "";
+    } else if (data.number) {
+    document.body.style.backgroundColor = data.color || "#333";
+      document.body.style.backgroundColor = data.mode === "numbers-multicolor" ? randomColor : "#333";
+      formDiv.innerHTML = `<div>${data.number}</div>`;
+    } else if (data.color) {
+      document.body.style.backgroundColor = data.color;
+    }
+  } else if (data.target === null) {
+    clearBlink();
+  }
+});
+
+socket.on("countdown_tick", data => {
+  document.getElementById("info").innerText = data.value > 0 ? `Start in ${data.value}...` : "";
+});
+
+socket.on("game_finished", () => {
+  clearBlink();
+  wasFinished = true;
+  document.getElementById("info").innerText = "✅ Spiel beendet";
+});
+
+socket.on("game_stopped", () => {
+  clearBlink();
+  document.getElementById("info").innerText = wasFinished ? "✅ Spiel beendet" : "❌ Spiel abgebrochen";
+  wasFinished = false;
+});
+  </script>
+ </body>
+</html>
