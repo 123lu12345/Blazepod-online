@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Pod</title>
+  <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+  <style>
+    html, body {
+      margin: 0; padding: 0;
+      background: black;
+      color: white;
+      font-family: sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 5rem;
+      text-align: center;
+    }
+    #text {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="text"></div>
+
+  <script>
+    const podId = window.location.pathname.split("/").pop();
+    const socket = io();
+    const textEl = document.getElementById("text");
+
+    const colors = {
+      red: "red", blue: "blue", green: "green", yellow: "yellow",
+      orange: "orange", pink: "deeppink", white: "white", black: "black"
+    };
+
+    socket.on("connect", () => {
+      socket.emit("register", { pod_id: podId });
+    });
+
+    socket.on("countdown_tick", data => {
+      textEl.textContent = data.value;
+      document.body.style.background = "black";
+      textEl.style.color = "white";
+    });
+
+    socket.on("show_color", data => {
+      if (String(data.pod_id) === podId) {
+        const color = colors[data.color] || "white";
+        document.body.style.background = color;
+        textEl.textContent = "";
+      } else {
+        document.body.style.background = "black";
+        textEl.textContent = "";
+      }
+    });
+
+    socket.on("show_text", data => {
+      if (!data.pod_id || String(data.pod_id) === podId) {
+        textEl.textContent = data.text || "";
+        document.body.style.background = "black";
+        textEl.style.color = "white";
+      }
+    });
+
+    socket.on("show_stoop", data => {
+      if (String(data.pod_id) === podId) {
+        textEl.textContent = data.text;
+        document.body.style.background = "black";
+        textEl.style.color = colors[data.color] || "white";
+      }
+    });
+
+    socket.on("clear", () => {
+      document.body.style.background = "black";
+      textEl.textContent = "";
+      textEl.style.color = "white";
+    });
+
+    socket.on("show_text", data => {
+      if (!data.pod_id || String(data.pod_id) === podId) {
+        if (data.text.includes("✔")) {
+          textEl.textContent = "✔ Spiel beendet";
+          document.body.style.background = "#040";
+        } else if (data.text.includes("❌")) {
+          textEl.textContent = "❌ Spiel abgebrochen";
+          document.body.style.background = "#600";
+        } else if (data.text.includes("⚠")) {
+          textEl.textContent = data.text;
+          document.body.style.background = "#660";
+        } else {
+          textEl.textContent = data.text || "";
+          document.body.style.background = "black";
+          textEl.style.color = "white";
+        }
+      }
+    });
+  </script>
+</body>
+</html>
