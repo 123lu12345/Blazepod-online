@@ -1,0 +1,366 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>BlazePod Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js">
+  function updateHistory() {
+    const list = document.getElementById("historyList");
+    const username = localStorage.getItem("playerName") || "Unbekannt";
+    const history = JSON.parse(localStorage.getItem("history_" + username) || "[]");
+    list.innerHTML = "";
+    history.slice(0, 10).forEach(entry => {
+      const li = document.createElement("li");
+      li.textContent = entry;
+      list.appendChild(li);
+    });
+  }
+
+</script>
+  <script src="https://cdn.socket.io/4.3.2/socket.io.min.js">
+  function updateHistory() {
+    const list = document.getElementById("historyList");
+    const username = localStorage.getItem("playerName") || "Unbekannt";
+    const history = JSON.parse(localStorage.getItem("history_" + username) || "[]");
+    list.innerHTML = "";
+    history.slice(0, 10).forEach(entry => {
+      const li = document.createElement("li");
+      li.textContent = entry;
+      list.appendChild(li);
+    });
+  }
+
+</script>
+  <style>
+    body { background: #111; color: white; font-family: Arial, sans-serif; margin: 0; }
+    header { background: #222; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+    .tabs { display: flex; background: #333; }
+    .tab-button { flex: 1; padding: 1rem; text-align: center; cursor: pointer; background: #333; border: none; color: white; font-size: 1rem; }
+    .tab-button.active { background: #555; }
+    .tab-content { display: none; padding: 2rem; }
+    .tab-content.active { display: block; }
+
+    input, select { padding: 0.4rem; font-size: 1rem; border-radius: 4px; border: none; margin: 0.5rem 0; }
+    .color-checks label { display: inline-block; margin-right: 1rem; }
+    .setting-block { margin-bottom: 1rem; }
+
+    .qr-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 1rem; margin: 2rem 0; }
+    .qr-box { display: flex; flex-direction: column; align-items: center; }
+    .status-indicator { width: 20px; height: 20px; border-radius: 4px; background: #555; margin-top: 0.5rem; }
+    .status-connected { background: limegreen !important; }
+    #logoutBtn { margin-left: 1rem; background: #f55; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; color: white; cursor: pointer; }
+    #podCountSelect { font-size: 1rem; margin-top: 1rem; padding: 0.3rem; border-radius: 5px; }
+
+    #targetColorContainer { margin-top: 1rem; }
+    .countdown { font-size: 2rem; margin-top: 2rem; text-align: center; }
+    #stopBtn { background: #d22; display: none; }
+  </style>
+</head>
+<body>
+
+<div id="loginModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center;">
+  <div style="background: #222; padding: 2rem; border-radius: 10px;">
+    <h2>Bitte Namen eingeben:</h2>
+    <input type="text" id="usernameInput" placeholder="z. B. Luca" />
+    <br>
+    <button onclick="login()">Anmelden</button>
+  </div>
+</div>
+
+<header>
+  <div><strong>BlazePod Dashboard</strong></div>
+  <div>
+    <span id="usernameDisplay"></span>
+    <button id="logoutBtn" onclick="logout()" style="display:none;">Abmelden</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab-button active" data-tab="settings">🛠️ Einstellungen</button>
+  <button class="tab-button" data-tab="gameconfig">🎮 Spieleinstellungen</button>
+  <button class="tab-button" data-tab="game">▶️ Spiel</button>
+  <button class="tab-button" data-tab="history">📈 Spielverlauf</button>
+</div>
+
+<div id="tab-settings" class="tab-content active">
+  <h2>Einstellungen</h2>
+  <label for="podCountSelect">Benötigte Pods:</label>
+  <select id="podCountSelect" onchange="updatePods()">
+    <option value="1">1 Pod</option>
+    <option value="2">2 Pods</option>
+    <option value="3">3 Pods</option>
+    <option value="4">4 Pods</option>
+    <option value="5" selected>5 Pods</option>
+  </select>
+  <div class="qr-container" id="qrContainer"></div>
+</div>
+
+<div id="tab-gameconfig" class="tab-content">
+  <h2>Spieleinstellungen</h2>
+
+  <div class="setting-block">
+    <label for="gameMode">Spielmodus:</label>
+    <select id="gameMode">
+      <option value="classic">Classic</option>
+      <option value="formen">Formen</option>
+      <option value="zahlen">Zahlen</option>
+      <option value="touch-to-switch">Touch to Switch</option>
+      <option value="reaktionsspiel">Reaktionsspiel</option>
+      <option value="stoop-test">Stoop-Test</option>
+    </select>
+  </div>
+
+  <div class="setting-block">
+    <label>Spieldauer (Minuten):</label>
+    <input type="number" id="duration" value="1" min="1" />
+  </div>
+
+  <div class="setting-block">
+    <label>Blink-Intervall (Sekunden):</label>
+    <input type="number" id="interval" value="1" min="0.1" step="0.1" />
+  </div>
+
+  <div class="setting-block">
+    <label>Pause zwischen Blinks (Sekunden):</label>
+    <input type="number" id="pause" value="1" min="0" step="0.1" />
+  </div>
+
+  <div class="setting-block">
+    <label><input type="checkbox" id="randomTiming" /> Zufälliger Blinkabstand</label>
+  </div>
+
+  <div class="setting-block">
+    <label>Farben:</label>
+    <div class="color-checks">
+      <label><input type="checkbox" id="color-red" checked /> Rot</label>
+      <label><input type="checkbox" id="color-blue" checked /> Blau</label>
+      <label><input type="checkbox" id="color-green" checked /> Grün</label>
+      <label><input type="checkbox" id="color-yellow" checked /> Gelb</label>
+      <label><input type="checkbox" id="color-orange" checked /> Orange</label>
+      <label><input type="checkbox" id="color-pink" checked /> Pink</label>
+      <label><input type="checkbox" id="color-white" checked /> Weiß</label>
+      <label><input type="checkbox" id="color-black" /> Schwarz</label>
+    </div>
+  </div>
+
+  <div id="targetColorContainer" class="setting-block" style="display:none;">
+    <label for="targetColor">Zielfarbe:</label>
+    <select id="targetColor"></select>
+  </div>
+</div>
+
+<div id="tab-game" class="tab-content">
+  <h2>▶️ Spiel starten</h2>
+  <button id="startBtn">Spiel starten</button>
+  <button id="stopBtn">Spiel stoppen</button>
+
+  <div class="countdown">
+    <div>Countdown bis Spielstart: <span id="startCountdown">-</span></div>
+    <div>Verbleibende Spielzeit: <span id="gameCountdown">-</span></div>
+  </div>
+</div>
+
+<div id="tab-history" class="tab-content">
+  <h2>📈 Spielverlauf</h2>
+  <ul id="historyList"></ul>
+</div>
+
+<script>
+  const socket = io();
+  function updatePods() {
+    const container = document.getElementById("qrContainer");
+    container.innerHTML = "";
+    const count = parseInt(document.getElementById("podCountSelect").value);
+    for (let i = 1; i <= count; i++) {
+      const box = document.createElement("div");
+      box.className = "qr-box";
+      const canvas = document.createElement("canvas");
+      canvas.id = "qr" + i;
+      const status = document.createElement("div");
+      status.id = "status" + i;
+      status.className = "status-indicator";
+      const label = document.createElement("div");
+      label.textContent = "Pod " + i;
+      box.appendChild(canvas);
+      box.appendChild(status);
+      box.appendChild(label);
+      container.appendChild(box);
+      setTimeout(() => {
+        new QRious({ element: canvas, size: 120, value: location.origin + "/pod/" + i });
+      }, 0);
+    }
+  }
+
+  socket.on("pod_connected", function(pod_id) {
+    const statusEl = document.getElementById("status" + pod_id);
+    if (statusEl) statusEl.classList.add("status-connected");
+  });
+
+  function updateTargetColorOptions() {
+    const targetSelect = document.getElementById("targetColor");
+    targetSelect.innerHTML = "";
+    document.querySelectorAll("input[type=checkbox][id^='color-']").forEach(cb => {
+      if (cb.checked) {
+        const val = cb.id.replace("color-", "");
+        const opt = document.createElement("option");
+        opt.value = val;
+        opt.textContent = val.charAt(0).toUpperCase() + val.slice(1);
+        targetSelect.appendChild(opt);
+      }
+    });
+  }
+
+  document.getElementById("gameMode").addEventListener("change", () => {
+    const show = document.getElementById("gameMode").value === "reaktionsspiel";
+    document.getElementById("targetColorContainer").style.display = show ? "block" : "none";
+    if (show) updateTargetColorOptions();
+  });
+
+  document.querySelectorAll("input[type=checkbox][id^='color-']").forEach(cb => {
+    cb.addEventListener("change", () => {
+      if (document.getElementById("gameMode").value === "reaktionsspiel") updateTargetColorOptions();
+    });
+  });
+
+  document.querySelectorAll(".tab-button").forEach(button => {
+    button.addEventListener("click", () => {
+      const target = button.getAttribute("data-tab");
+      document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+      button.classList.add("active");
+      document.getElementById("tab-" + target).classList.add("active");
+    });
+  });
+
+  function login() {
+    const name = document.getElementById('usernameInput').value.trim();
+    if (name.length > 0) {
+      localStorage.setItem("playerName", name);
+      document.getElementById("usernameDisplay").innerText = "👤 " + name;
+      document.getElementById("loginModal").style.display = "none";
+      document.getElementById("logoutBtn").style.display = "inline-block";
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem("playerName");
+    location.reload();
+  }
+
+  // Spiel-Countdowns
+  const startBtn = document.getElementById("startBtn");
+  const stopBtn = document.getElementById("stopBtn");
+  const startCountdown = document.getElementById("startCountdown");
+  const gameCountdown = document.getElementById("gameCountdown");
+
+  let startInterval, gameInterval;
+  let gameDurationSeconds;
+  let countdownSeconds = 10;
+
+  function resetCountdowns() {
+    startCountdown.textContent = "-";
+    gameCountdown.textContent = "-";
+  }
+
+  function startGameSequence() {
+    gameDurationSeconds = parseInt(document.getElementById("duration").value) * 60;
+    startBtn.style.display = "none";
+    stopBtn.style.display = "inline-block";
+    let countdown = countdownSeconds;
+    startCountdown.textContent = countdown;
+    startInterval = setInterval(() => {
+      countdown--;
+      startCountdown.textContent = countdown;
+      if (countdown <= 0) {
+        clearInterval(startInterval);
+        startCountdown.textContent = "Start!";
+    const mode = document.getElementById("gameMode").value;
+    const durationMin = parseInt(document.getElementById("duration").value);
+    const username = localStorage.getItem("playerName") || "Unbekannt";
+    const timestamp = new Date().toLocaleString("de-CH");
+    const entry = `${timestamp} – ${mode} (${durationMin} Min)`;
+    let history = JSON.parse(localStorage.getItem("history_" + username) || "[]");
+    history.unshift(entry);
+    localStorage.setItem("history_" + username, JSON.stringify(history));
+    updateHistory();
+
+        beginGame();
+      }
+    }, 1000);
+  }
+
+  function beginGame() {
+    let timeLeft = gameDurationSeconds;
+    gameCountdown.textContent = timeLeft;
+    gameInterval = setInterval(() => {
+      timeLeft--;
+      gameCountdown.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        clearInterval(gameInterval);
+        gameCountdown.textContent = "Beendet";
+        stopBtn.style.display = "none";
+        startBtn.style.display = "inline-block";
+      }
+    }, 1000);
+  }
+
+  function stopGame() {
+    clearInterval(startInterval);
+    clearInterval(gameInterval);
+    resetCountdowns();
+    updateHistory();
+    stopBtn.style.display = "none";
+    startBtn.style.display = "inline-block";
+  }
+
+  
+  startBtn.onclick = () => {
+    startGameSequence();
+
+    const mode = document.getElementById("gameMode").value;
+    const duration = parseInt(document.getElementById("duration").value) * 60;
+    const interval = parseFloat(document.getElementById("interval").value);
+    const pause = parseFloat(document.getElementById("pause").value);
+    const colors = Array.from(document.querySelectorAll("input[type=checkbox][id^='color-']:checked"))
+      .map(cb => cb.id.replace("color-", ""));
+
+    socket.emit("start_game", {
+      mode: mode,
+      duration: duration,
+      interval: interval,
+      pause: pause,
+      colors: colors
+    });
+  };
+
+  stopBtn.onclick = () => stopGame();
+
+  window.onload = () => {
+    updatePods();
+    const storedName = localStorage.getItem("playerName");
+    if (storedName) {
+      document.getElementById("usernameDisplay").innerText = "👤 " + storedName;
+      document.getElementById("loginModal").style.display = "none";
+      document.getElementById("logoutBtn").style.display = "inline-block";
+    }
+    resetCountdowns();
+    updateHistory();
+  };
+
+  function updateHistory() {
+    const list = document.getElementById("historyList");
+    const username = localStorage.getItem("playerName") || "Unbekannt";
+    const history = JSON.parse(localStorage.getItem("history_" + username) || "[]");
+    list.innerHTML = "";
+    history.slice(0, 10).forEach(entry => {
+      const li = document.createElement("li");
+      li.textContent = entry;
+      list.appendChild(li);
+    });
+  }
+
+</script>
+
+</body>
+</html>
