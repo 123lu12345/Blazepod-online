@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>BlazePod Mini</title>
+  <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+</head>
+<body style="font-family: sans-serif; background: #111; color: white; text-align: center; padding: 2rem;">
+  <h1>BlazePod Mini-Dashboard</h1>
+  <p>Countdown: <span id="countdown">-</span></p>
+  <button id="startBtn">Start</button>
+  <button id="stopBtn" style="display:none;">Stopp</button>
+
+  <script>
+    const socket = io();
+    const countdown = document.getElementById("countdown");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+
+    socket.on("countdown_tick", data => {
+      countdown.textContent = data.value;
+    });
+
+    startBtn.onclick = () => {
+      socket.emit("start", { duration: 30, interval: 2, colors: ["red", "green"] });
+      startBtn.style.display = "none";
+      stopBtn.style.display = "inline-block";
+    };
+
+    stopBtn.onclick = () => {
+      socket.emit("stop");
+      startBtn.style.display = "inline-block";
+      stopBtn.style.display = "none";
+    };
+  </script>
+</body>
+</html>
