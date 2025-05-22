@@ -309,7 +309,7 @@
         const interval = parseFloat(document.getElementById("blinkInterval").value);
         const pause = parseFloat(document.getElementById("blackPause").value);
         const mode = document.getElementById("gameMode").value;
-        const randomTiming = document.getElementById("randomTimingToggle").checked;
+        const randomTiming = false;
         const colors = getSelectedColors();
         socket.emit("start_game", { duration, interval, pause, colors, randomTiming, mode });
         gameDurationSeconds = duration * 60;
