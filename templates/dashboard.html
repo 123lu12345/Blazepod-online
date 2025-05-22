@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>BlazePod Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+        }
+        .qr-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        canvas {
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        select, input, button {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        .status {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .status div {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            background-color: grey;
+        }
+        .connected {
+            background-color: green !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>BlazePod Dashboard</h1>
+
+    <div class="qr-container">
+        <div>
+            <p>Pod 1</p>
+            <canvas id="qr1"></canvas>
+        </div>
+        <div>
+            <p>Pod 2</p>
+            <canvas id="qr2"></canvas>
+        </div>
+        <div>
+            <p>Pod 3</p>
+            <canvas id="qr3"></canvas>
+        </div>
+        <div>
+            <p>Pod 4</p>
+            <canvas id="qr4"></canvas>
+        </div>
+    </div>
+
+    <div class="status">
+        <div id="status1"></div>
+        <div id="status2"></div>
+        <div id="status3"></div>
+        <div id="status4"></div>
+    </div>
+
+    <div>
+        <label>Spielzeit (Minuten):</label>
+        <input type="number" id="gameDuration" value="1" min="1" max="10">
+        <label>Blink-Intervall (Sek.):</label>
+        <input type="number" id="blinkInterval" value="1" min="0.5" max="5" step="0.5">
+        <label>Pause zwischen Blinks (Sek.):</label>
+        <input type="number" id="pauseDuration" value="1" min="0" max="5" step="0.5">
+    </div>
+
+    <div>
+        <label>Spielmodus:</label>
+        <select id="mode">
+            <option value="classic">Classic</option>
+            <option value="touch">Touch to Switch</option>
+        </select>
+    </div>
+
+    <button onclick="startGame()">Start</button>
+    <button onclick="stopGame()">Stopp</button>
+
+    <script>
+        const qr1 = new QRious({element: document.getElementById('qr1'), value: location.origin + "/pod/1", size: 120});
+        const qr2 = new QRious({element: document.getElementById('qr2'), value: location.origin + "/pod/2", size: 120});
+        const qr3 = new QRious({element: document.getElementById('qr3'), value: location.origin + "/pod/3", size: 120});
+        const qr4 = new QRious({element: document.getElementById('qr4'), value: location.origin + "/pod/4", size: 120});
+
+        function startGame() {
+            fetch("/start", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    duration: document.getElementById("gameDuration").value,
+                    blink_interval: document.getElementById("blinkInterval").value,
+                    pause_duration: document.getElementById("pauseDuration").value,
+                    mode: document.getElementById("mode").value
+                })
+            });
+        }
+
+        function stopGame() {
+            fetch("/stop", {method: "POST"});
+        }
+
+        // Live-Status der Pods
+        const source = new EventSource("/status");
+        source.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            [1, 2, 3, 4].forEach(i => {
+                const el = document.getElementById("status" + i);
+                if (data.includes(i)) {
+                    el.classList.add("connected");
+                } else {
+                    el.classList.remove("connected");
+                }
+            });
+        };
+    </script>
+</body>
+</html>

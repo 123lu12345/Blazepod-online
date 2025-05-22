@@ -1,0 +1,22 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Pod</title>
+</head>
+<body>
+    <h1>Pod verbunden</h1>
+
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        const podId = window.location.pathname.split("/").pop();
+
+        socket.on("connect", () => {
+            console.log("Pod verbunden mit ID:", podId);
+            socket.emit("join", { pod_id: podId });
+        });
+    </script>
+</body>
+</html>
