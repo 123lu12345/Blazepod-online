@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Verbundenene Pods:</h1>
+    <ul id="connectedPods"></ul>
+
+    <script>
+        const socket = io();
+
+        socket.on("update_connected_pods", (pods) => {
+            const list = document.getElementById("connectedPods");
+            list.innerHTML = "";
+            pods.forEach(pod => {
+                const li = document.createElement("li");
+                li.innerText = "Pod " + pod;
+                list.appendChild(li);
+            });
+        });
+    </script>
+</body>
+</html>
