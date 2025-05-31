@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>BlazePod Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+</head>
+<body>
+<!-- Die restliche Datei bleibt wie gehabt, außer dass der Spielzeit-Timer nur bei endMode === 'time' angezeigt wird -->
+
+<script>
+  let gameDurationSeconds = 0;
+  let timerInterval = null;
+  let startTimerAfterCountdown = false;
+
+  function updateTimerDisplay() {
+    const endMode = document.getElementById("endMode")?.value;
+    if (endMode !== 'time') {
+      document.getElementById("timer").innerText = "";
+      return;
+    }
+    const minutes = Math.floor(gameDurationSeconds / 60);
+    const seconds = gameDurationSeconds % 60;
+    document.getElementById("timer").innerText = `Verbleibende Spielzeit: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  document.getElementById("endMode").addEventListener("change", () => {
+    updateTimerDisplay();
+  });
+
+  // Der Rest des Scripts bleibt unverändert
+</script>
+</body>
+</html>
