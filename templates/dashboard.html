@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BlazePod Dashboard</title>
+</head>
+<body>
+  <h2>Dashboard Test</h2>
+  <button id="startBtn">Start</button>
+  <button id="stopBtn">Stopp</button>
+  <div id="countdown"></div>
+  <div id="timer"></div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script>
+    const socket = io();
+    let countdownInterval = null;
+
+    document.getElementById("startBtn").addEventListener("click", () => {
+      socket.emit("start_game", {
+        mode: "classic",
+        endMode: "time",
+        duration: 1,
+        blinkCount: 20,
+        interval: 1,
+        pause: 1,
+        colors: ["red", "blue"],
+        targetColor: "red"
+      });
+    });
+
+    document.getElementById("stopBtn").addEventListener("click", () => {
+      socket.emit("stop_game");
+    });
+
+    socket.on("countdown_tick", (data) => {
+      const countdownEl = document.getElementById("countdown");
+      countdownEl.innerText = data.value > 0 ? `Start in ${data.value}...` : "";
+    });
+
+    socket.on("start_timer", (data) => {
+      let remaining = data.duration * 60;
+      const timerEl = document.getElementById("timer");
+
+      if (countdownInterval) clearInterval(countdownInterval);
+
+      countdownInterval = setInterval(() => {
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          timerEl.innerText = "⏱ Spiel beendet";
+        } else {
+          const min = Math.floor(remaining / 60);
+          const sec = remaining % 60;
+          timerEl.innerText = `⏱ Spiel läuft: ${min}:${sec.toString().padStart(2, '0')}`;
+          remaining--;
+        }
+      }, 1000);
+    });
+
+    socket.on("game_stopped", () => {
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        document.getElementById("timer").innerText = "❌ Spiel abgebrochen";
+      }
+    });
+  </script>
+</body>
+</html>
