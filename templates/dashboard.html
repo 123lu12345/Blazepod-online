@@ -580,7 +580,7 @@ function showSpielverlauf() {
       Modus: ${spiel.modus}<br>
       Dauer: ${spiel.dauer}<br>
       Farben: ${spiel.farben?.join(', ') || '–'}
-      ${spiel.modus === 'Fokus' && spiel.treffer !== undefined ? `<br>🎯 Treffer: ${spiel.treffer} | ❌ Fehler: ${spiel.fehler} <button onclick="downloadFokusAuswertung(${i})">Download</button>` : ''}
+      ${spiel.modus === 'focus' && spiel.treffer !== undefined ? `<br>🎯 Treffer: ${spiel.treffer} | ❌ Fehler: ${spiel.fehler} <button onclick="downloadFokusAuswertung(${i})">Download</button>` : ''}
     `;
     container.appendChild(item);
   });
@@ -603,18 +603,7 @@ function downloadFokusAuswertung(index) {
 
 window.addEventListener('load', showSpielverlauf);
 </script><script>
-// Diese Funktion soll vom Spielsystem aufgerufen werden, wenn das Spiel natürlich beendet wurde
-function triggerSaveAfterNaturalEnd(fokusStats = null) {
-  const modus = document.getElementById("modusSelect")?.value || "Unbekannt";
-  const spielBeendenNach = document.querySelector('input[name="spielende"]:checked')?.value;
-  const dauer = spielBeendenNach === "zeit" 
-    ? document.getElementById("spielzeitInput")?.value + " Sek." 
-    : document.getElementById("blinkCountInput")?.value + " Blinks";
-  const farben = Array.from(document.querySelectorAll('input[name="farben"]:checked')).map(cb => cb.value);
-
-  handleGameEnd(modus, dauer, farben, fokusStats);
-}
-</script><script>
+<script>
 socket.on("trigger_dashboard_save", (data) => {
   const modus = data.mode || "Unbekannt";
   const dauer = data.duration ? Math.round(data.duration / 60) + " Min." : "unbekannt";
