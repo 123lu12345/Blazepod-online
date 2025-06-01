@@ -69,6 +69,7 @@ def start_game(data):
     def game_loop():
         for i in range(10, 0, -1):
             socketio.emit("countdown_tick", {"value": i})
+            time.sleep(1)
     
         socketio.emit("trigger_dashboard_save", {
             "mode": mode,
